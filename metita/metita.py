@@ -3,11 +3,17 @@
 import sys
 
 
-moves = ((-3, 0), (-2, 2), (0, 3), (2, 2), (3, 0), (2, -2), (0, -3), (-2, -2))
+MOVES = ((-3, 0), (-2, 2), (0, 3), (2, 2), (3, 0), (2, -2), (0, -3), (-2, -2))
 
 
 def make_board(x, y):
     return [[0] * y for _ in range(x)]
+
+
+def _prioritise(board, moves):
+    weights = map(lambda x: min(x[0], len(board) - x[0] - 1) +
+        min(x[1], len(board[0]) - x[1] - 1), moves)
+    return zip(*sorted(zip(weights, moves)))[1]
 
 
 def metita(board, x, y, depth=1):
@@ -18,12 +24,17 @@ def metita(board, x, y, depth=1):
     if depth == len(board) * len(board[0]):
         return True
 
-    for move in moves:
+    _moves = []
+    for move in MOVES:
         _x = x + move[0]
         _y = y + move[1]
         if (_x >= 0 and _x < len(board) and _y >= 0 and _y < len(board[0]) and
                 board[_x][_y] == 0):
-            if metita(board, _x, _y, depth + 1):
+            _moves.append((_x, _y))
+
+    if _moves:
+        for move in _prioritise(board, _moves):
+            if metita(board, move[0], move[1], depth + 1):
                 return True
 
     board[x][y] = 0
@@ -33,7 +44,7 @@ def metita(board, x, y, depth=1):
 def print_solution(board, handle=sys.stdout):
     for row in board:
         for element in row:
-            handle.write(' {:2d}'.format(element))
+            handle.write(' {:3d}'.format(element))
         handle.write('\n')
     handle.write('\n')
 
@@ -41,7 +52,7 @@ def print_solution(board, handle=sys.stdout):
 def main():
     """
     """
-    board = make_board(10, 6)
+    board = make_board(10, 10)
     metita(board, 0, 0)
     print_solution(board)
 
