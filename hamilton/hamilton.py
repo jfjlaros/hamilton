@@ -7,18 +7,19 @@ import yaml
 
 
 class Hamilton(object):
-    def __init__(self, handle, x_size, y_size, x, y):
+    """
+    """
+    def __init__(self, handle, x_size, y_size):
+        """
+        """
         self._moves = yaml.load(handle)['moves']
         self._x_size = x_size
         self._y_size = y_size
         self._max_depth = self._x_size * self._y_size
+        self.tries = 0
         self.board = [[0] * self._y_size for _ in range(self._x_size)]
 
-        for i in range(self._x_size):
-            for j in range(self._y_size):
-                self.board[i][j] = -len(self._valid_moves(i, j))
-
-        self._solve(x, y)
+        self.reset()
 
     def __str__(self):
         string = ''
@@ -31,26 +32,38 @@ class Hamilton(object):
         return string
 
     def _valid_moves(self, x, y):
+        """
+        """
         moves = []
 
         for move in self._moves:
             _x = x + move[0]
             _y = y + move[1]
-            if (_x >= 0 and _x < self._x_size and _y >= 0 and _y < self._y_size
-                and self.board[_x][_y] < 1):
+            if (_x >= 0 and _x < self._x_size and
+                    _y >= 0 and _y < self._y_size and self.board[_x][_y] < 1):
                 moves.append((_x, _y))
 
         return moves
 
     def _prioritise(self, moves):
+        """
+        """
         weights = map(lambda x: -self.board[x[0]][x[1]], moves)
 
         return zip(*sorted(zip(weights, moves)))[1]
 
-    def _solve(self, x, y, depth=1):
+    def reset(self):
+        """
+        """
+        for i in range(self._x_size):
+            for j in range(self._y_size):
+                self.board[i][j] = -len(self._valid_moves(i, j))
+
+    def solve(self, x, y, depth=1):
         """
         """
         self.board[x][y] = depth
+        self.tries += 1
 
         if depth == self._max_depth:
             return True
@@ -61,7 +74,7 @@ class Hamilton(object):
 
         if moves:
             for move in self._prioritise(moves):
-                if self._solve(move[0], move[1], depth + 1):
+                if self.solve(move[0], move[1], depth + 1):
                     return True
 
         self.board[x][y] = -len(moves)
@@ -72,7 +85,13 @@ class Hamilton(object):
 
 
 def hamilton(handle, x, y, i, j):
-    print Hamilton(handle, x, y, i, j)
+    """
+    """
+    h = Hamilton(handle, x, y)
+    print h
+    h.solve(i, j)
+    print h
+    print h.tries
 
 
 def main():
