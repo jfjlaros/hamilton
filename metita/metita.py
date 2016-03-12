@@ -6,7 +6,8 @@ import sys
 import yaml
 
 
-MOVES = yaml.load(open("moves.yml"))['moves']
+MOVES = yaml.load(open("knight.yml"))['moves']
+tries = 0
 
 
 def _valid_moves(board, x, y):
@@ -33,17 +34,16 @@ def make_board(x, y):
 
 
 def _prioritise(board, moves):
-    #weights = map(lambda x: min(x[0], len(board) - x[0] - 1) +
-    #    min(x[1], len(board[0]) - x[1] - 1), moves)
     weights = map(lambda x: -board[x[0]][x[1]], moves)
-    print weights
     return zip(*sorted(zip(weights, moves)))[1]
 
 
 def do_move(board, x, y, depth=1):
     """
     """
+    global tries
     board[x][y] = depth
+    tries += 1
 
     if depth == len(board) * len(board[0]):
         return True
@@ -51,7 +51,7 @@ def do_move(board, x, y, depth=1):
     _moves = _valid_moves(board, x, y)
     for move in _moves:
         board[move[0]][move[1]] += 1
-    print_board(board)
+    #print_board(board)
 
     if _moves:
         for move in _prioritise(board, _moves):
@@ -76,12 +76,24 @@ def metita(x, y, i, j):
     board = make_board(x, y)
     do_move(board, i, j)
     print_board(board)
+    print tries
 
 
 def main():
     """
     """
-    metita(19, 19, 0, 0)
+    parser = argparse.ArgumentParser(
+        description='', epilog='',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+   
+    parser.add_argument('-x', dest='x', type=int, default=10, help='height')
+    parser.add_argument('-y', dest='y', type=int, default=10, help='width')
+    parser.add_argument('-i', dest='i', type=int, default=0, help='x position')
+    parser.add_argument('-j', dest='j', type=int, default=0, help='y position')
+
+    arguments = parser.parse_args()
+
+    metita(arguments.x, arguments.y, arguments.i, arguments.j)
 
 
 if __name__ == '__main__':
