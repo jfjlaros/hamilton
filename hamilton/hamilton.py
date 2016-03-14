@@ -102,7 +102,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('-m', dest='moves', type=argparse.FileType('r'),
-        help='game rules')
+        default=open('metita.yml'), help='game rules')
     parser.add_argument('-x', dest='x', type=int, default=10, help='height')
     parser.add_argument('-y', dest='y', type=int, default=10, help='width')
     parser.add_argument('-i', dest='i', type=int, default=0, help='x position')
