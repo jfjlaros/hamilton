@@ -48,6 +48,9 @@ class Hamilton(object):
     def _prioritise(self, moves):
         """
         """
+        if not moves:
+            return []
+
         weights = map(lambda x: -self.board[x[0]][x[1]], moves)
 
         return zip(*sorted(zip(weights, moves)))[1]
@@ -62,6 +65,9 @@ class Hamilton(object):
     def solve(self, x, y, depth=1):
         """
         """
+        if not self._valid_moves(0, 0):
+            return False
+
         self.board[x][y] = depth
         self.tries += 1
 
@@ -72,10 +78,9 @@ class Hamilton(object):
         for move in moves:
             self.board[move[0]][move[1]] += 1
 
-        if moves:
-            for move in self._prioritise(moves):
-                if self.solve(move[0], move[1], depth + 1):
-                    return True
+        for move in self._prioritise(moves):
+            if self.solve(move[0], move[1], depth + 1):
+                return True
 
         self.board[x][y] = -len(moves)
         for move in moves:
