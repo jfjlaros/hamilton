@@ -9,10 +9,10 @@ import yaml
 class Hamilton(object):
     """
     """
-    def __init__(self, handle, x_size, y_size):
+    def __init__(self, moves, x_size, y_size):
         """
         """
-        self._moves = yaml.load(handle)['moves']
+        self._moves = moves
         self._x_size = x_size
         self._y_size = y_size
         self._max_depth = self._x_size * self._y_size
@@ -138,7 +138,7 @@ class Hamilton(object):
 def hamilton(handle, x, y, i, j):
     """
     """
-    h = Hamilton(handle, x, y)
+    h = Hamilton(yaml.load(handle)['moves'], x, y)
     print h
     h.solve(i, j)
     print h
