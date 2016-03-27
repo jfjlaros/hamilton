@@ -16,6 +16,7 @@ class Hamilton(object):
         self._x_size = x_size
         self._y_size = y_size
         self._max_depth = self._x_size * self._y_size
+        self._stack = []
         self.tries = 0
         self.board = [[0] * self._y_size for _ in range(self._x_size)]
 
@@ -30,6 +31,27 @@ class Hamilton(object):
             string += '\n'
 
         return string
+
+    def _dump_stack(self):
+        for element in self._stack:
+            print element
+        print
+
+    def _push(self, moves):
+        self._stack.append([len(moves), moves])
+
+    def _pop(self):
+        return self._stack.pop()
+
+    def _current(self):
+        return self._stack[-1][1][self._stack[-1][0]]
+
+    def _next(self):
+        if not self._stack[-1][0]:
+            return ()
+
+        self._stack[-1][0] -= 1
+        return self._current()
 
     def _valid_moves(self, x, y):
         """
@@ -62,7 +84,7 @@ class Hamilton(object):
             for j in range(self._y_size):
                 self.board[i][j] = -len(self._valid_moves(i, j))
 
-    def solve(self, x, y, depth=1):
+    def solve_recursive(self, x, y, depth=1):
         """
         """
         if not self._valid_moves(0, 0):
@@ -87,6 +109,30 @@ class Hamilton(object):
             self.board[move[0]][move[1]] -= 1
 
         return False
+
+    def solve(self, x, y):
+        """
+        """
+        depth = 1
+        self.board[x][y] = depth
+        self._push(self._valid_moves(x, y))
+
+        while True:
+            move = self._next()
+            if move:
+                moves = self._valid_moves(move[0], move[1])
+                depth += 1
+                self.board[move[0]][move[1]] = depth
+                if depth == self._max_depth:
+                    return
+                self._push(moves)
+            else:
+                self._pop()
+                if not self._stack:
+                    return
+                undo = self._current()
+                self.board[undo[0]][undo[1]] = -1
+                depth -= 1
 
 
 def hamilton(handle, x, y, i, j):
