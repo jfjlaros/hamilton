@@ -34,6 +34,7 @@ class Hamilton(object):
 
         return string
 
+    # TODO: Remove.
     def _dump_stack(self):
         for element in self._stack:
             print element
@@ -43,7 +44,7 @@ class Hamilton(object):
         self._stack.append([len(moves), moves])
 
     def _pop(self):
-        return self._stack.pop()
+        return self._stack.pop()[1]
 
     def _current(self):
         return self._stack[-1][1][self._stack[-1][0]]
@@ -69,13 +70,17 @@ class Hamilton(object):
 
         return moves
 
+    def _update(self, moves, amount):
+        for move in moves:
+            self.board[move[0]][move[1]] += amount
+
     def _prioritise(self, moves):
         """
         """
         if not moves:
             return []
 
-        weights = map(lambda x: -self.board[x[0]][x[1]], moves)
+        weights = map(lambda x: self.board[x[0]][x[1]], moves)
 
         return zip(*sorted(zip(weights, moves)))[1]
 
@@ -89,8 +94,8 @@ class Hamilton(object):
     def solve_recursive(self, x, y, depth=1):
         """
         """
-        if not self._valid_moves(0, 0):
-            return False
+        #if not self._valid_moves(0, 0):
+        #    return False
 
         self.board[x][y] = depth
         self.tries += 1
@@ -99,16 +104,14 @@ class Hamilton(object):
             return True
 
         moves = self._valid_moves(x, y)
-        for move in moves:
-            self.board[move[0]][move[1]] += 1
+        self._update(moves, 1)
 
-        for move in self._prioritise(moves):
-            if self.solve(move[0], move[1], depth + 1):
+        for move in self._prioritise(moves)[::-1]:
+            if self.solve_recursive(move[0], move[1], depth + 1):
                 return True
 
         self.board[x][y] = -len(moves)
-        for move in moves:
-            self.board[move[0]][move[1]] -= 1
+        self._update(moves, -1)
 
         return False
 
@@ -117,23 +120,30 @@ class Hamilton(object):
         """
         depth = 1
         self.board[x][y] = depth
-        self._push(self._valid_moves(x, y))
+        self.tries = 1
+
+        moves = self._prioritise(self._valid_moves(x, y))
+        self._update(moves, 1)
+        self._push(moves)
 
         while True:
             move = self._next()
             if move:
-                moves = self._valid_moves(move[0], move[1])
+                self.tries += 1
                 depth += 1
                 self.board[move[0]][move[1]] = depth
                 if depth == self._max_depth:
-                    return
+                    return True
+                moves = self._prioritise(self._valid_moves(move[0], move[1]))
+                self._update(moves, 1)
                 self._push(moves)
             else:
-                self._pop()
+                moves = self._pop()
                 if not self._stack:
-                    return
+                    return False
                 undo = self._current()
-                self.board[undo[0]][undo[1]] = -1
+                self.board[undo[0]][undo[1]] = -len(moves)
+                self._update(moves, -1)
                 depth -= 1
 
 
