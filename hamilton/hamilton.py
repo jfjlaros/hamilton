@@ -137,12 +137,15 @@ class Hamilton(object):
                 depth -= 1
 
 
-def hamilton(handle, x, y, i, j):
+def hamilton(handle, x, y, i, j, r):
     """
     """
     h = Hamilton(yaml.load(handle)['moves'], x, y)
     print h
-    h.solve(i, j)
+    if not r:
+        h.solve(i, j)
+    else:
+        h.solve_recursive(i, j)
     print h
     print h.tries
 
@@ -160,11 +163,13 @@ def main():
     parser.add_argument('-y', dest='y', type=int, default=10, help='width')
     parser.add_argument('-i', dest='i', type=int, default=0, help='x position')
     parser.add_argument('-j', dest='j', type=int, default=0, help='y position')
+    parser.add_argument('-r', dest='r', default=False, action='store_true',
+        help='use recursion')
 
     arguments = parser.parse_args()
 
     hamilton(arguments.moves, arguments.x, arguments.y, arguments.i,
-        arguments.j)
+        arguments.j, arguments.r)
 
 
 if __name__ == '__main__':
