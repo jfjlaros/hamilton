@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import math
 import sys
 
 import yaml
@@ -16,6 +17,7 @@ class Hamilton(object):
         self._x_size = x_size
         self._y_size = y_size
         self._max_depth = self._x_size * self._y_size
+        self._decimals = int(math.log(self._max_depth, 10) + 1)
         self._stack = []
         self.tries = 0
         self.board = [[0] * self._y_size for _ in range(self._x_size)]
@@ -27,7 +29,7 @@ class Hamilton(object):
 
         for row in self.board:
             for element in row:
-                string += ' {:3d}'.format(element)
+                string += ' {{:{}d}}'.format(self._decimals).format(element)
             string += '\n'
 
         return string
