@@ -2,6 +2,8 @@
 This library provides functions to find a Hamiltonian path or cycle in a graph
 that is induced by a rectangular board and a list of moves.
 
+For a more colourful explanation, see this [notebook](heatmap.ipynb).
+
 ```python
 >>> import yaml
 >>>
@@ -15,6 +17,12 @@ that is induced by a rectangular board and a list of moves.
 >>> # Find a Hamiltonian path.
 >>> knight.solve()
 True
+```
+
+The result is stored in `knight.board` and can be pretty-printed by calling the
+`__str__` function.
+
+```python
 >>> print knight
   1 26 15 24 29 50 13 32
  16 23 28 51 14 31 64 49
