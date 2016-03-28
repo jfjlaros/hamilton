@@ -182,8 +182,8 @@ class Hamilton(object):
 
         while True:
             move = self._next()
-            if move and not self._closed or self._valid_moves(
-                    self._x_start, self._y_start):
+            if move and (not self._closed or self._valid_moves(
+                    self._x_start, self._y_start)):
                 depth += 1
                 self.board[move[0]][move[1]] = depth
                 if depth == self._max_depth:
