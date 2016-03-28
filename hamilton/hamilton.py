@@ -10,19 +10,20 @@ import yaml
 class Hamilton(object):
     """
     """
-    def __init__(self, moves, x_size, y_size):
+    def __init__(self, moves, x_size, y_size, closed=False):
         """
         """
         self._moves = moves
         self._x_size = x_size
         self._y_size = y_size
+        self._closed = closed
+        self._x_start = 0
+        self._y_start = 0
         self._max_depth = self._x_size * self._y_size
         self._decimals = int(math.log(self._max_depth, 10) + 1)
         self._stack = []
         self.tries = 0
         self.board = [[0] * self._y_size for _ in range(self._x_size)]
-
-        self.reset()
 
     def __str__(self):
         string = ''
@@ -84,18 +85,23 @@ class Hamilton(object):
 
         return zip(*sorted(zip(weights, moves)))[1]
 
-    def reset(self):
+    def set_start(self, x, y):
         """
         """
         for i in range(self._x_size):
             for j in range(self._y_size):
                 self.board[i][j] = -len(self._valid_moves(i, j))
 
-    def solve_recursive(self, x, y, depth=1):
+        self._x_start = x
+        self._y_start = y
+
+    def _solve_recursive(self, x, y, depth=1):
         """
         """
-        #if not self._valid_moves(0, 0):
-        #    return False
+        # Making any field inaccessible would be a better check.
+        if self._closed and not self._valid_moves(
+                self._x_start, self._y_start):
+            return False
 
         self.board[x][y] = depth
         self.tries += 1
@@ -107,7 +113,7 @@ class Hamilton(object):
         self._update(moves, 1)
 
         for move in self._prioritise(moves)[::-1]:
-            if self.solve_recursive(move[0], move[1], depth + 1):
+            if self._solve_recursive(move[0], move[1], depth + 1):
                 return True
 
         self.board[x][y] = -len(moves)
@@ -115,20 +121,25 @@ class Hamilton(object):
 
         return False
 
-    def solve(self, x, y):
+    def solve_recursive(self):
+        self._solve_recursive(self._x_start, self._y_start)
+
+    def solve(self):
         """
         """
         depth = 1
-        self.board[x][y] = depth
+        self.board[self._x_start][self._y_start] = depth
         self.tries = 1
 
-        moves = self._prioritise(self._valid_moves(x, y))
+        moves = self._prioritise(
+            self._valid_moves(self._x_start, self._y_start))
         self._update(moves, 1)
         self._push(moves)
 
         while True:
             move = self._next()
-            if move:
+            if move and not self._closed or self._valid_moves(
+                    self._x_start, self._y_start):
                 self.tries += 1
                 depth += 1
                 self.board[move[0]][move[1]] = depth
@@ -147,15 +158,16 @@ class Hamilton(object):
                 depth -= 1
 
 
-def hamilton(handle, x, y, i, j, r):
+def hamilton(handle, x, y, i, j, r, c):
     """
     """
-    h = Hamilton(yaml.load(handle)['moves'], x, y)
+    h = Hamilton(yaml.load(handle)['moves'], x, y, c)
+    h.set_start(i, j)
     print h
     if not r:
-        h.solve(i, j)
+        h.solve()
     else:
-        h.solve_recursive(i, j)
+        h.solve_recursive()
     print h
     print h.tries
 
@@ -173,13 +185,15 @@ def main():
     parser.add_argument('-y', dest='y', type=int, default=10, help='width')
     parser.add_argument('-i', dest='i', type=int, default=0, help='x position')
     parser.add_argument('-j', dest='j', type=int, default=0, help='y position')
+    parser.add_argument('-c', dest='c', default=False, action='store_true',
+        help='find a closed path')
     parser.add_argument('-r', dest='r', default=False, action='store_true',
         help='use recursion')
 
     arguments = parser.parse_args()
 
     hamilton(arguments.moves, arguments.x, arguments.y, arguments.i,
-        arguments.j, arguments.r)
+        arguments.j, arguments.r, arguments.c)
 
 
 if __name__ == '__main__':
