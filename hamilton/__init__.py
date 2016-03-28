@@ -15,7 +15,7 @@ __version_info__ = ('0', '0', '1')
 __version__ = '.'.join(__version_info__)
 __author__ = 'Jeroen F.J. Laros'
 __contact__ = 'jaros@fixedpoint.nl'
-__homepage__ = 'https://git.lumc.nl/j.f.j.laros/hamilton'
+__homepage__ = 'https://github.com/jfjlaros/hamilton'
 
 
 usage = __doc__.split('\n\n\n')
