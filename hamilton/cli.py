@@ -11,7 +11,8 @@ from . import Hamilton, usage, version
 
 
 def hamilton(
-        moves, height, width, x_start, y_start, closed, recursive, output):
+        moves, height, width, x_start, y_start, closed, recursive, max_retries,
+        output):
     """
     Find a Hamiltonian path or cycle.
 
@@ -22,17 +23,22 @@ def hamilton(
     :arg int x_start: x-coordinate of start position.
     :arg int y_start: y-coordinate of start position,
     :arg bool closed: Find a closed path.
+    :arg int max_retries: Maximum number of retries (0=disabled).
     :arg bool recursive: Use recursive solver.
     """
     hamilton_path = Hamilton(
         yaml.load(moves)['moves'],
-        height, width, x_start, y_start, closed)
+        height, width, x_start, y_start, closed, max_retries)
     if not recursive:
-        hamilton_path.solve()
+        solver = hamilton_path.solve
     else:
-        hamilton_path.solve_recursive()
-    output.write(str(hamilton_path) + '\n')
-    output.write('Number of retries: {}\n'.format(hamilton_path.retries))
+        solver = hamilton_path.solve_recursive
+
+    if solver():
+        output.write(str(hamilton_path) + '\n')
+        output.write('Number of retries: {}\n'.format(hamilton_path.retries))
+    else:
+        output.write('No solution found.\n')
 
 
 def main():
@@ -61,6 +67,10 @@ def main():
     parser.add_argument(
         '-c', dest='closed', default=False, action='store_true',
         help='find a closed path')
+    parser.add_argument(
+        '-m', dest='max_retries', type=int, default=0,
+        help='maximum number of retries (%(type)s default=%(default)s ' \
+        '(disabled))')
     parser.add_argument(
         '-r', dest='recursive', default=False, action='store_true',
         help='use recursive solver')

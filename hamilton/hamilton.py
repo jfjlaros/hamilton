@@ -13,7 +13,9 @@ class Hamilton(object):
     Find a Hamiltonian path or cycle in a graph that is induced by a
     rectangular board and a list of moves.
     """
-    def __init__(self, moves, x_size, y_size, x_start, y_start, closed=False):
+    def __init__(
+            self, moves, x_size, y_size, x_start, y_start, closed=False,
+            max_retries=0):
         """
         :arg list moves: Definition of allowed moves.
         :arg int x_size: Height of the board.
@@ -21,10 +23,12 @@ class Hamilton(object):
         :arg int x: x-coordinate.
         :arg int y: y-coordinate.
         :arg bool closed: Find a closed path.
+        :arg int max_reties: Stop after a given number of retries (0=disabled).
         """
         self._moves = moves
         self._x_size = x_size
         self._y_size = y_size
+        self._max_retries = max_retries
 
         self._max_depth = self._x_size * self._y_size
         self._decimals = int(math.log(self._max_depth, 10) + 1)
@@ -183,6 +187,8 @@ class Hamilton(object):
                 self._update(moves, 1)
                 self._push(moves)
             else:
+                if self._max_retries and self.retries >= self._max_retries:
+                    return False
                 self.retries += 1
                 moves = self._pop()
                 if not self._stack:
