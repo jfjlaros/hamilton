@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 
+"""
+Find a Hamiltonian path or cycle in a graph that is induced by a rectangular
+board and a list of moves.
+
+
+Copyright (c) 2016 Jeroen F.J. Laros <jlaros@fixedpoint.nl>
+
+Licensed under the MIT license, see the LICENSE file.
+"""
+
 import argparse
 import math
 import sys
@@ -9,16 +19,21 @@ import yaml
 
 class Hamilton(object):
     """
+    Find a Hamiltonian path or cycle in a graph that is induced by a
+    rectangular board and a list of moves.
     """
-    def __init__(self, moves, x_size, y_size, closed=False):
+    def __init__(self, moves, x_size, y_size):
         """
+        :arg list moves: Definition of allowed moves.
+        :arg int x_size: Height of the board.
+        :arg int y_size: Width of the board.
         """
         self._moves = moves
         self._x_size = x_size
         self._y_size = y_size
-        self._closed = closed
         self._x_start = 0
         self._y_start = 0
+        self._closed = False
         self._max_depth = self._x_size * self._y_size
         self._decimals = int(math.log(self._max_depth, 10) + 1)
         self._stack = []
@@ -26,20 +41,10 @@ class Hamilton(object):
         self.board = [[0] * self._y_size for _ in range(self._x_size)]
 
     def __str__(self):
-        string = ''
-
-        for row in self.board:
-            for element in row:
-                string += ' {{:{}d}}'.format(self._decimals).format(element)
-            string += '\n'
-
-        return string
-
-    # TODO: Remove.
-    def _dump_stack(self):
-        for element in self._stack:
-            print element
-        print
+        return '\n'.join(
+            map(lambda r: ''.join(
+            map(lambda e: ' {{:{}d}}'.format(self._decimals).format(e), r)),
+            self.board)) + '\n'
 
     def _push(self, moves):
         self._stack.append([len(moves), moves])
@@ -59,6 +64,12 @@ class Hamilton(object):
 
     def _valid_moves(self, x, y):
         """
+        Determine all valid moves, given a position.
+
+        :arg int x: x-coordinate.
+        :arg int y: y-coordinate.
+
+        :returns list: List of valid moves.
         """
         moves = []
 
@@ -72,11 +83,22 @@ class Hamilton(object):
         return moves
 
     def _update(self, moves, amount):
+        """
+        Update accessibility of a list of moves.
+
+        :arg list moves: List of moves.
+        :arg int amount: Increase or decrease accessibility (1 or -1).
+        """
         for move in moves:
             self.board[move[0]][move[1]] += amount
 
     def _prioritise(self, moves):
         """
+        Prioritise a list of moves based on accessibility.
+
+        :arg list moves: List of moves.
+
+        :returns list: List of moves sorted by accessibility.
         """
         if not moves:
             return []
@@ -85,18 +107,13 @@ class Hamilton(object):
 
         return zip(*sorted(zip(weights, moves)))[1]
 
-    def set_start(self, x, y):
-        """
-        """
-        for i in range(self._x_size):
-            for j in range(self._y_size):
-                self.board[i][j] = -len(self._valid_moves(i, j))
-
-        self._x_start = x
-        self._y_start = y
-
     def _solve_recursive(self, x, y, depth=1):
         """
+        :arg int x: x-coordinate.
+        :arg int y: y-coordinate.
+        :arg int depth: Move number.
+
+        :returns bool: True for success, False for failure.
         """
         # Making any field inaccessible would be a better check.
         if self._closed and not self._valid_moves(
@@ -121,11 +138,35 @@ class Hamilton(object):
 
         return False
 
+    def set_start(self, x, y, closed=False):
+        """
+        Initialise the board and set the parameters for the path finding.
+
+        :arg int x: x-coordinate.
+        :arg int y: y-coordinate.
+        :arg bool closed: Find a closed path.
+        """
+        for i in range(self._x_size):
+            for j in range(self._y_size):
+                self.board[i][j] = -len(self._valid_moves(i, j))
+
+        self._x_start = x
+        self._y_start = y
+        self._closed = closed
+
     def solve_recursive(self):
-        self._solve_recursive(self._x_start, self._y_start)
+        """
+        Find a Hamiltonian path or cycle.
+
+        :returns bool: True for success, False for failure.
+        """
+        return self._solve_recursive(self._x_start, self._y_start)
 
     def solve(self):
         """
+        Find a Hamiltonian path or cycle.
+
+        :returns bool: True for success, False for failure.
         """
         depth = 1
         self.board[self._x_start][self._y_start] = depth
@@ -158,42 +199,61 @@ class Hamilton(object):
                 depth -= 1
 
 
-def hamilton(handle, x, y, i, j, r, c):
+def hamilton(moves_handle, height, width, x_start, y_start, closed, recursive):
     """
+    Find a Hamiltonian path or cycle.
+
+    :arg handle moves_handle:
+    :arg int height: Height of the board.
+    :arg int width: Width of the board.
+    :arg int x_start: x-coordinate of start position.
+    :arg int y_start: y-coordinate of start position,
+    :arg bool closed: Find a closed path.
+    :arg bool recursive: Use recursive solver.
     """
-    h = Hamilton(yaml.load(handle)['moves'], x, y, c)
-    h.set_start(i, j)
-    print h
-    if not r:
-        h.solve()
+    hamilton_path = Hamilton(yaml.load(moves_handle)['moves'], height, width)
+    hamilton_path.set_start(x_start, y_start, closed)
+    print hamilton_path
+    if not recursive:
+        hamilton_path.solve()
     else:
-        h.solve_recursive()
-    print h
-    print h.tries
+        hamilton_path.solve_recursive()
+    print hamilton_path
+    print hamilton_path.tries
 
 
 def main():
-    """
-    """
+    usage = __doc__.split('\n\n\n')
     parser = argparse.ArgumentParser(
-        description='', epilog='',
+        description=usage[0], epilog=usage[1],
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-m', dest='moves', type=argparse.FileType('r'),
+    parser.add_argument(
+        '-m', dest='moves_handle', type=argparse.FileType('r'),
         default=open('metita.yml'), help='game rules')
-    parser.add_argument('-x', dest='x', type=int, default=10, help='height')
-    parser.add_argument('-y', dest='y', type=int, default=10, help='width')
-    parser.add_argument('-i', dest='i', type=int, default=0, help='x position')
-    parser.add_argument('-j', dest='j', type=int, default=0, help='y position')
-    parser.add_argument('-c', dest='c', default=False, action='store_true',
+    parser.add_argument(
+        '-X', dest='height', type=int, default=10,
+        help='height of the board (%(type)s default=%(default)s)')
+    parser.add_argument(
+        '-Y', dest='width', type=int, default=10,
+        help='width of the board (%(type)s default=%(default)s)')
+    parser.add_argument(
+        '-x', dest='x_start', type=int, default=0,
+        help='x-coordinate of start position (%(type)s default=%(default)s)')
+    parser.add_argument(
+        '-y', dest='y_start', type=int, default=0,
+        help='y-coordinate of start position (%(type)s default=%(default)s)')
+    parser.add_argument(
+        '-c', dest='closed', default=False, action='store_true',
         help='find a closed path')
-    parser.add_argument('-r', dest='r', default=False, action='store_true',
-        help='use recursion')
+    parser.add_argument(
+        '-r', dest='recursive', default=False, action='store_true',
+        help='use recursive solver')
 
     arguments = parser.parse_args()
 
-    hamilton(arguments.moves, arguments.x, arguments.y, arguments.i,
-        arguments.j, arguments.r, arguments.c)
+    hamilton(**dict((k, v) for k, v in vars(arguments).items()
+        if k not in ('func', 'subcommand')))
 
 
 if __name__ == '__main__':
