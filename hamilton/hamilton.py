@@ -1,16 +1,15 @@
-"""
-Find a Hamiltonian path or cycle in a graph that is induced by a rectangular
+"""Find a Hamiltonian path or cycle in a graph that is induced by a rectangular
 board and a list of moves.
 
 
 Copyright (c) 2016 Jeroen F.J. Laros <jlaros@fixedpoint.nl>
 """
+from sys import stdout
 import math
 
 
 class Hamilton(object):
-    """
-    Find a Hamiltonian path or cycle in a graph that is induced by a
+    """Find a Hamiltonian path or cycle in a graph that is induced by a
     rectangular board and a list of moves.
     """
     def __init__(
@@ -58,8 +57,7 @@ class Hamilton(object):
         return self._current()
 
     def _valid_moves(self, x, y):
-        """
-        Determine all valid moves, given a position.
+        """Determine all valid moves, given a position.
 
         :arg int x: x-coordinate.
         :arg int y: y-coordinate.
@@ -71,15 +69,15 @@ class Hamilton(object):
         for move in self._moves:
             _x = x + move[0]
             _y = y + move[1]
-            if (_x >= 0 and _x < self._x_size and
+            if (
+                    _x >= 0 and _x < self._x_size and
                     _y >= 0 and _y < self._y_size and self.board[_x][_y] < 1):
                 moves.append((_x, _y))
 
         return moves
 
     def _update(self, moves, amount):
-        """
-        Update accessibility of a list of moves.
+        """Update accessibility of a list of moves.
 
         :arg list moves: List of moves.
         :arg int amount: Increase or decrease accessibility (1 or -1).
@@ -88,8 +86,7 @@ class Hamilton(object):
             self.board[move[0]][move[1]] += amount
 
     def _prioritise(self, moves):
-        """
-        Prioritise a list of moves based on accessibility.
+        """Prioritise a list of moves based on accessibility.
 
         :arg list moves: List of moves.
 
@@ -100,7 +97,7 @@ class Hamilton(object):
 
         weights = map(lambda x: self.board[x[0]][x[1]], moves)
 
-        return zip(*sorted(zip(weights, moves)))[1]
+        return list(zip(*sorted(zip(weights, moves))))[1]
 
     def _solve_recursive(self, x, y, depth=1):
         """
@@ -134,8 +131,7 @@ class Hamilton(object):
         return False
 
     def reset(self, x, y, closed=False):
-        """
-        Initialise the board and set the parameters for the path finding.
+        """Initialise the board and set the parameters for the path finding.
 
         :arg int x: x-coordinate.
         :arg int y: y-coordinate.
@@ -154,16 +150,44 @@ class Hamilton(object):
         self.retries = 0
 
     def solve_recursive(self):
-        """
-        Find a Hamiltonian path or cycle.
+        """Find a Hamiltonian path or cycle.
 
         :returns bool: True for success, False for failure.
         """
         return self._solve_recursive(self._x_start, self._y_start)
 
+    def _stop_condition(self, move):
+        if not move:
+            return False
+
+        if self._closed:
+            if not self._valid_moves(self._x_start, self._y_start):
+                return False
+
+        priorities = list(map(
+            lambda x: len(self._valid_moves(x[0], x[1])), self._stack[-1][1]))
+        if len(priorities) > 1:
+            # If one of the squares is unreachable, there is no point in
+            # exploring other possibilities.
+            if priorities[-1] == 0:
+                return False
+            if self._closed:
+                # If we see two squares that are accessible from one
+                # position, either one of those squares is an end point. 
+                if priorities[-2] < 2:
+                    #stdout.write('\n{}'.format(self))
+                    return False
+            else:
+                # If we see three squares that are accessible from one
+                # position, either two of those squares is an end point. Since
+                # we can only have one end point, we can stop here.
+                if len(priorities) > 2 and priorities[-3] < 2:
+                    return False
+
+        return True
+
     def solve(self):
-        """
-        Find a Hamiltonian path or cycle.
+        """Find a Hamiltonian path or cycle.
 
         :returns bool: True for success, False for failure.
         """
@@ -176,9 +200,9 @@ class Hamilton(object):
         self._push(moves)
 
         while True:
+            #stdout.write('{}'.format(depth))
             move = self._next()
-            if move and (not self._closed or self._valid_moves(
-                    self._x_start, self._y_start)):
+            if self._stop_condition(move):
                 depth += 1
                 self.board[move[0]][move[1]] = depth
                 if depth == self._max_depth:
