@@ -27,7 +27,7 @@ def hamilton(
     :arg bool recursive: Use recursive solver.
     """
     hamilton_path = Hamilton(
-        yaml.load(moves)['moves'],
+        yaml.safe_load(moves)['moves'],
         height, width, x_start, y_start, closed, max_retries)
     if not recursive:
         solver = hamilton_path.solve
